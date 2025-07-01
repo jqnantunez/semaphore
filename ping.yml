@@ -1,14 +1,14 @@
 ---
-
 - hosts: all
   become: true
   tasks:
-    - name: ping
-      ping:
-      
-    - name: whoami
+    - name: Verificar conectividad (ping)
+      ansible.builtin.ping:
+
+    - name: Obtener el usuario actual
       ansible.builtin.shell: whoami
       register: quien
 
-    - debug:
-        var: quien
+    - name: Mostrar resultado del whoami
+      ansible.builtin.debug:
+        var: quien.stdout
