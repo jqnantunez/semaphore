@@ -12,10 +12,22 @@
 
   # in order to check if node exporter is installed we call exporter-installed.yml
 
-  - name: call exporter-installed.yml
-    include_tasks: exporter-installed.yml
-    vars:
-        shared_output: "{{ node_exporter_binary }}"
+  #- name: call exporter-installed.yml
+    #include_tasks: exporter-installed.yml
+    #vars:
+        #shared_output: "{{ node_exporter_binary }}"
+        
+ # check if node exporter is installed
+ - name: check if node_exporter binary exists
+   stat:
+     path: /usr/local/bin/node_exporter
+   register: node_exporter_binary
+   when: ansible_os_family in ["Debian","RedHat"]
+
+ # print result
+ - name: does the node_exporter binary exists?
+   debug:
+     msg: "{{ node_exporter_binary.stat.exists }}"
 
   # check if node exporter is configured as a service
   # here we assume if node_exporter.service file exists, it is configured as a service
