@@ -8,3 +8,7 @@
       
     - name: whoami
       ansible.builtin.shell: whoami
+      register: quien
+
+    - debug:
+        var: quien
