@@ -7,7 +7,7 @@
   hosts: all
   become: yes
   become_method: sudo
-  #become_user: root
+  become_user: jantunez
   tasks:
 
   # in order to check if node exporter is installed we call exporter-installed.yml
