@@ -6,7 +6,7 @@
 - name: node_exporter status as a service
   hosts: all
   become: yes
-  #become_method: sudo
+  become_method: sudo
   #become_user: root
   tasks:
 
