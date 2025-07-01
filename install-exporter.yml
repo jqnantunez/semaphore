@@ -1,0 +1,103 @@
+---
+
+- name: install node_exporter
+  hosts: all
+  become: true
+  tasks:
+
+  # in order to check if node exporter is installed we call exporter-installed.yml
+
+  - name: call exporter-installed.yml
+    include_tasks: exporter-installed.yml
+    vars:
+        shared_output: "{{ node_exporter_binary }}"
+
+  # create node_exporter user
+
+  - name: create node_exporter user
+    user:
+      name: node_exporter
+      state: present
+      shell: /bin/false
+      create_home: no
+    when: not node_exporter_binary.stat.exists
+
+  # if node exporter is not installed, we download node exporter 1.3.1 binary
+
+  - name: download node exporter 1.3.1 binary
+    shell: sudo curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-amd64.tar.gz
+    when: not node_exporter_binary.stat.exists
+    register: node_exporter_binary_downloaded
+
+  # unzip node exporter 1.3.1 binary
+
+  - name: unzip node exporter 1.3.1 binary
+    shell: tar -xvf node_exporter-1.3.1.linux-amd64.tar.gz
+    when: node_exporter_binary_downloaded.changed
+    register: node_exporter_binary_unzipped
+
+  # move it to path
+
+  - name: move executable to path
+    shell: cp node_exporter-1.3.1.linux-amd64/node_exporter /usr/local/bin/node_exporter
+    when: node_exporter_binary_unzipped.changed
+    register: node_exporter_moved
+
+  # change ownership of node_exporter binary
+
+  - name: change node_exporter binary owner to user node_exporter
+    ansible.builtin.file:
+      path: /usr/local/bin/node_exporter
+      owner: node_exporter
+      group: node_exporter
+
+  # create service
+
+  - name: create node_exporter service
+    ansible.builtin.copy:
+      dest: /etc/systemd/system/node_exporter.service
+      content: |
+        [Unit]
+        Description=Prometheus Node Exporter
+        #After=network.target
+
+        [Service]
+        User=node_exporter
+        Group=node_exporter
+        EnvironmentFile=-/etc/sysconfig/node_exporter
+        ExecStart=/usr/local/bin/node_exporter $OPTIONS
+        #ExecStart=/usr/local/bin/node_exporter
+        #Restart=always
+
+        [Install]
+        #WantedBy=default.target
+        WantedBy=multi-user.target
+    when: node_exporter_moved.changed
+    register: node_exporter_service_created
+
+  # reload service
+
+  - name: reload node_exporter service
+    #shell: systemctl daemon-reload
+    ansible.builtin.service:
+      name: node_exporter.service
+      state: reloaded
+    when: node_exporter_service_created.changed
+    register: node_exporter_service_reloaded
+
+  # enable and start node exporter service
+
+  - name: enable and start node_exporter service
+    #shell: systemctl enable node_exporter && systemctl start node_exporter
+    ansible.builtin.service:
+      name: node_exporter.service
+      state: started
+      enabled: yes
+    when: node_exporter_service_reloaded.changed
+    register: node_exporter_service_enabled_and_started
+
+  # delete files
+
+  - name: delete files
+    shell: sudo rm -rf node_exporter-*
+    when: not node_exporter_binary.stat.exists and node_exporter_service_enabled_and_started.enabled and node_exporter_service_enabled_and_started.state == "started"
