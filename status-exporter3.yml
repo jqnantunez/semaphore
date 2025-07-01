@@ -8,7 +8,7 @@
   #become: yes
   #become_method: sudo
   #become_user: jantunez
-  gather_facts: no
+  gather_facts: true
   tasks:
 
   # in order to check if node exporter is installed we call exporter-installed.yml
