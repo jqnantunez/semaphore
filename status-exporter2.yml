@@ -1,0 +1,75 @@
+---
+
+  # in this playbook we check the status of node exporter service
+  # if node exporter is installed and configured as a service
+
+- name: node_exporter status as a service
+  hosts: all
+  become: yes
+  #become_method: sudo
+  #become_user: root
+  tasks:
+
+  # in order to check if node exporter is installed we call exporter-installed.yml
+
+  #- name: call exporter-installed.yml
+    #include_tasks: exporter-installed.yml
+    #vars:
+        #shared_output: "{{ node_exporter_binary }}"
+
+  - name: a
+    stat:
+      path: /usr/local/bin/node_exporter
+    register: node_exporter_binary
+    when: ansible_os_family in ["Debian","RedHat"]
+
+  - name: aa
+    debug:
+      msg: "{{ node_exporter_binary.stat.exists }}"
+
+  # check if node exporter is configured as a service
+  # here we assume if node_exporter.service file exists, it is configured as a service
+
+  - name: check if node_exporter is configured as a service
+    stat:
+      path: /etc/systemd/system/node_exporter.service
+    register: node_exporter_as_a_service
+    when: node_exporter_binary.stat.exists
+
+  # if not we print it
+
+  - name: is node_exporter configured as a service?
+    debug:
+      msg: "{{ node_exporter_as_a_service.stat.exists }}"
+    when: node_exporter_binary.stat.exists
+
+  # get if node exporter is enabled or disabled
+
+  - name: get if node_exporter is enabled or disabled
+    shell: systemctl is-enabled node_exporter
+    register: node_exporter_e_or_d
+    when: node_exporter_binary.stat.exists and node_exporter_as_a_service.stat.exists
+    failed_when: node_exporter_e_or_d.rc not in [0, 1]
+    changed_when: false
+
+  # print if node exporter is enabled or disabled
+
+  - name: node_exporter enabled or disabled?
+    debug:
+      msg: "Node Exporter service is {{ node_exporter_e_or_d.stdout }}."
+    when: node_exporter_binary.stat.exists and node_exporter_as_a_service.stat.exists
+
+  # get node exporter status
+
+  - name: get node_exporter status
+    systemd:
+      name: node_exporter
+    register: node_exporter_status
+    when: node_exporter_binary.stat.exists and node_exporter_as_a_service.stat.exists
+
+  # print node exporter status
+
+  - name: show node_exporter status
+    debug:
+      msg: "Node Exporter service status is {{ node_exporter_status.status.ActiveState }}."
+    when: node_exporter_binary.stat.exists and node_exporter_as_a_service.stat.exists
