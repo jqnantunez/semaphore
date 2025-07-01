@@ -5,7 +5,7 @@
 
 - name: node_exporter status as a service
   hosts: all
-  #become: yes
+  become: yes
   #become_method: sudo
   #become_user: jantunez
   gather_facts: true
