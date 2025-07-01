@@ -8,6 +8,7 @@
   #become: yes
   #become_method: sudo
   #become_user: jantunez
+  gather_facts: no
   tasks:
 
   # in order to check if node exporter is installed we call exporter-installed.yml
@@ -21,7 +22,7 @@
     stat:
       path: /usr/local/bin/node_exporter
     register: node_exporter_binary
-    when: ansible_os_family in ["Debian","RedHat"]
+    #when: ansible_os_family in ["Debian","RedHat"]
 
   - name: aa
     debug:
