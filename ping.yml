@@ -2,8 +2,8 @@
 - hosts: all
   become: true
   tasks:
-    - name: Verificar conectividad (ping)
-      ansible.builtin.ping:
+    #- name: Verificar conectividad (ping)
+      #ansible.builtin.ping:
 
     - name: Obtener el usuario actual
       ansible.builtin.shell: whoami
